@@ -13,7 +13,7 @@ function main () {
     window.buffer_ctx = buffer_canvas.getContext("2d")
     // jump parameters
     window.RADIUS = 1
-    window.GRAVITY = 300 // acceleration, per second
+    window.GRAVITY = 900 // acceleration, per second
     // global variables
     window.time = 0
     window.deltatime = 0
@@ -114,9 +114,11 @@ onmousedown = function (e) {
 		return
 	onmousemove(e)
 	player.jumping = true
-	var dist_y = (target.y - player.y) * 2 // to rework
-	var duration = Math.abs(-dist_y / GRAVITY) // time needed by the gravity to change the player velocity of this "y" distance amount, in seconds 
-	player.velocity.y = dist_y / duration // power needed to travel the "y" distance + the gravity in the given duration
+    var duration = .5
+	var dist_y = (target.y - player.y) * (2 / duration)
+	//var duration = .5 //1 //Math.abs(-dist_y / GRAVITY) // time needed by the gravity to change the player velocity of this "y" distance amount, in seconds 
+	player.velocity.y = dist_y // / duration // * duration //(dist_y - GRAVITY * duration) / duration // power needed to travel the "y" distance + the gravity in the given duration
+    GRAVITY = -player.velocity.y / duration
 	player.velocity.x = (target.x - player.x) / duration // power needed to travel the "x" distance in the given duration
 	console.log(dist_y, duration, player.velocity)
 }
