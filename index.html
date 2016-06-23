@@ -1,0 +1,123 @@
+<body style=position:fixed;margin:0>
+<canvas id=C>
+<script>
+"use strict"
+onload = main
+
+function main () {
+    // canvas
+    window.W = C.width = innerWidth
+    window.H = C.height = innerHeight
+    window.visible_ctx = C.getContext("2d")
+    window.buffer_canvas = C.cloneNode()
+    window.buffer_ctx = buffer_canvas.getContext("2d")
+    // jump parameters
+    window.radius = 1
+    window.jump_strength = 500
+    // global variables
+    window.time = 0
+    window.deltatime = 0
+    window.jump_direction = 0
+	window.ground_y = H * 0.8
+	window.target = { x: 0, y: 0 }
+    window.player = {
+        x: W * 0.5,
+        y: H * 0.5,
+        r: W * 0.01,
+        direction: 0,
+        velocity: { x: 0, y: 0 },
+		jumping: true,
+		ground_x: 0,
+		ground_y: 0
+    }
+    // start game loop
+    loop(0)
+}
+
+function loop (t) {
+    deltatime = (t - time) * 0.001
+    time = t
+    update()
+    draw()
+    requestAnimationFrame(loop)
+}
+
+function update () {
+    // gravity
+    player.velocity.y += 20
+    // potential next player position
+    var next_x = player.x + player.velocity.x * deltatime
+    var next_y = player.y + player.velocity.y * deltatime
+    // collisions
+		//// window horizontal edges
+	if (next_x - player.r < 0) {
+		player.velocity.x = 0
+		next_x = player.r
+	} else if (next_x + player.r > W) {
+		player.velocity.x = 0
+		next_x = W - player.r
+	}
+		//// ground
+	if (player.velocity.y > 0 && next_y + player.r > ground_y) {
+		player.velocity.y = 0
+		next_y = ground_y - player.r
+		player.jumping = false
+		player.ground_x = next_x
+		player.ground_y = next_y
+	}
+    // player position
+    player.x = next_x
+    player.y = next_y
+}
+
+function draw () {
+    // motion blur
+    buffer_ctx.globalAlpha = 0.85
+    // sky background
+    buffer_ctx.fillStyle = "#def"
+    buffer_ctx.fillRect(0, 0, W, H)
+    // ground
+	buffer_ctx.fillStyle = "#2a2"
+    buffer_ctx.fillRect(0, ground_y, W, H - ground_y)
+    // player
+    buffer_ctx.fillStyle = "#048"
+    buffer_ctx.fillRect(player.x - player.r, player.y - player.r, player.r * 2, player.r * 2)
+    // helpers
+		//// direction line
+	buffer_ctx.strokeStyle = "#e22"
+	buffer_ctx.beginPath()
+	buffer_ctx.moveTo(player.ground_x, player.ground_y)
+	buffer_ctx.lineTo(target.x, target.y)
+	buffer_ctx.stroke()
+		//// radius circle
+	buffer_ctx.strokeStyle = "#c0e"
+	buffer_ctx.beginPath()
+	buffer_ctx.arc(player.ground_x, player.ground_y, radius, 0, 2 * Math.PI)
+	buffer_ctx.stroke()
+    // draw buffer
+    visible_ctx.drawImage(buffer_canvas, 0, 0)
+}
+
+onmousemove = function (e) {
+	if (player.jumping)
+		return
+	target.x = e.pageX
+	target.y = e.pageY
+	radius = Math.sqrt(dist_xy_sqr(player, target))
+	jump_direction = Math.atan2(target.y - player.y, target.x - player.x)
+}
+
+// jump
+onmousedown = function (e) {
+	if (player.jumping)
+		return
+	player.jumping = true
+	player.velocity.y = -jump_strength
+}
+
+function dist_xy_sqr (a, b) {
+	var dx = b.x - a.x;
+	var dy = b.y - a.y;
+	return dx * dx + dy * dy;
+}
+</script>
