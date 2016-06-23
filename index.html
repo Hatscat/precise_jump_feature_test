@@ -12,12 +12,12 @@ function main () {
     window.buffer_canvas = C.cloneNode()
     window.buffer_ctx = buffer_canvas.getContext("2d")
     // jump parameters
-    window.radius = 1
-    window.jump_strength = 500
+    window.RADIUS = 1
+    window.GRAVITY = 300 // acceleration, per second
     // global variables
     window.time = 0
     window.deltatime = 0
-    window.jump_direction = 0
+    //window.jump_direction = 0
 	window.ground_y = H * 0.8
 	window.target = { x: 0, y: 0 }
     window.player = {
@@ -43,8 +43,8 @@ function loop (t) {
 }
 
 function update () {
-    // gravity
-    player.velocity.y += 20
+    // gravity acceleration
+    player.velocity.y += GRAVITY * deltatime
     // potential next player position
     var next_x = player.x + player.velocity.x * deltatime
     var next_y = player.y + player.velocity.y * deltatime
@@ -58,8 +58,9 @@ function update () {
 		next_x = W - player.r
 	}
 		//// ground
-	if (player.velocity.y > 0 && next_y + player.r > ground_y) {
+	if (next_y + player.r > ground_y) {
 		player.velocity.y = 0
+		player.velocity.x = 0
 		next_y = ground_y - player.r
 		player.jumping = false
 		player.ground_x = next_x
@@ -89,10 +90,10 @@ function draw () {
 	buffer_ctx.moveTo(player.ground_x, player.ground_y)
 	buffer_ctx.lineTo(target.x, target.y)
 	buffer_ctx.stroke()
-		//// radius circle
+		//// RADIUS circle
 	buffer_ctx.strokeStyle = "#c0e"
 	buffer_ctx.beginPath()
-	buffer_ctx.arc(player.ground_x, player.ground_y, radius, 0, 2 * Math.PI)
+	buffer_ctx.arc(player.ground_x, player.ground_y, RADIUS, 0, 2 * Math.PI)
 	buffer_ctx.stroke()
     // draw buffer
     visible_ctx.drawImage(buffer_canvas, 0, 0)
@@ -103,21 +104,26 @@ onmousemove = function (e) {
 		return
 	target.x = e.pageX
 	target.y = e.pageY
-	radius = Math.sqrt(dist_xy_sqr(player, target))
-	jump_direction = Math.atan2(target.y - player.y, target.x - player.x)
+	RADIUS = Math.sqrt(dist_xy_sqr(player, target))
+	//jump_direction = Math.atan2(target.y - player.y, target.x - player.x)
 }
 
-// jump
+// jump function
 onmousedown = function (e) {
 	if (player.jumping)
 		return
+	onmousemove(e)
 	player.jumping = true
-	player.velocity.y = -jump_strength
+	var dist_y = (target.y - player.y) * 2 // to rework
+	var duration = Math.abs(-dist_y / GRAVITY) // time needed by the gravity to change the player velocity of this "y" distance amount, in seconds 
+	player.velocity.y = dist_y / duration // power needed to travel the "y" distance + the gravity in the given duration
+	player.velocity.x = (target.x - player.x) / duration // power needed to travel the "x" distance in the given duration
+	console.log(dist_y, duration, player.velocity)
 }
 
 function dist_xy_sqr (a, b) {
-	var dx = b.x - a.x;
-	var dy = b.y - a.y;
-	return dx * dx + dy * dy;
+	var dx = b.x - a.x
+	var dy = b.y - a.y
+	return dx * dx + dy * dy
 }
 </script>
